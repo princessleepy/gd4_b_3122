@@ -26,4 +26,4 @@ function GameBoard ({cards,flippedCards,  matchedCards, onFlip}){
         </div>
     )
 }
-export default GameBoard;
+export default ScoreBoard;
