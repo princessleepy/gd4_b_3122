@@ -1,29 +1,47 @@
 
 //GameBoard.js adalah komponen yang menampilkan semua kartu dalam bentuk grid
 //Dia mengambil data kartu lalu mengirimnya ke komponen Card satu per satu
-
-
 import React from "react";
-import Card from "./Card"; //manggil komponen card.js
+import { FaClock, FaMousePointer, FaCheck, FaSyncAlt, FaRedo } from 'react-icons/fa';
 
-function GameBoard ({cards,flippedCards,  matchedCards, onFlip}){
-    return(
-        //grid container 4 kolom untuk menampilkan kartu
-        <div className="grid grid-cols-4 gap-4 justify-items-center"> {/*ini pakai tailwind css*/}
+function ScoreBoard({ moves, matchedCount, totalPairs, onReset }) {
+        const isGameComplete = matchedCount === totalPairs;
 
-            {cards.map(card => ( //mengulang array, map() akan membuat Card untuk setiap item
-                //render komponen card untuk setiap kartu
-                //
-                <Card
-                key={card.id} //Digunakan React untuk optimasi render list
-                card={card} //Mengirim data kartu ke komponen Card.
-                isFlipped={flippedCards.includes(card.id)} //Mengecek apakah kartu ada di array flippedcards
-                isMatched={matchedCards.includes(card.id)} //Mengecek apakah kartu ada di array matchedcards
-                onFlip={onFlip} //mengirim fungsi ketika kartu diklik
-                />
-            ))}
+        return (
+                <div className="text-center mb-6">
+                        {/*tampilin jumlah percobaan dan pasangan yang ditemukan */}
+                        <div className="flex justify-center gap-8 mb-4">
+                                <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg">
+                                        <p className="text-sm text-indigo-200 flex items-center justify-center gap-1">
+                                                <FaMousePointer className="text-indigo-300" /> Percobaan
+                                        </p>
+                                        <p className="text-2xl font-bold text-white">{moves}</p>
+                                </div>
+                                <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg">
+                                        <p className="text-sm text-indigo-200 flex items-center justify-center gap-1">
+                                                <FaCheck className="text-indigo-300" /> Ditemukan
+                                        </p>
+                                        <p className="text-2xl font-bold text-white">{matchedCount}/{totalPairs}</p>
+                                </div>
+                        </div>
 
-        </div>
-    )
+                        {/* Pesan selamat jika semua pasangan ditemukan */}
+                        {isGameComplete && (
+                                <p className="text-yellow-300 font-bold text-lg mb-2 animate-pulse">
+                                        🎉 Selamat! Kamu menang dalam {moves} percobaan!
+                                </p>
+                        )}
+
+                        {/* Tombol untuk mereset permainan */}
+                        <button
+                                onClick={onReset}
+                                className="px-6 py-2 bg-yellow-400 text-indigo-900 font-bold rounded-full hover:bg-yellow-300 transition-colors duration-200 shadow-lg flex items-center gap-2 mx-auto"
+                        >
+                                {isGameComplete ? <FaRedo /> : <FaSyncAlt />}
+                                {isGameComplete ? 'Main Lagi' : 'Acak Ulang'}
+                        </button>
+                </div>
+        );
 }
+
 export default ScoreBoard;

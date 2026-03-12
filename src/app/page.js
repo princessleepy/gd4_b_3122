@@ -19,95 +19,111 @@ const ICONS=[
 
 //fungsi
 //menerima
-const shuffleArray=(array)=>{
-  const shuffled=[...array];
-  for (let i = shuffled.length - 1; i>0; i--){
-    const j =Math.floor(Math.random()*(i+1));
-    [shuffled[i], shuffled[j] = shuffled[j], shuffled[j], shuffled[i]];
+const shuffleArray = (array) => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
-  return shuffled
+  return shuffled;
 };
 
 //fungsi untuk membuat set kartu baru
-const createCards=()=>{
-  const paired = ICONS.flatMap((item,index)=>[
-    {id:index*2,icon:item.icon, color: item.color, pairId: index},
-    {id: index*2+1, icon: item.icon, color:item.color, pairId:index},
+const createCards = () => {
+  const paired = ICONS.flatMap((item, index) => [
+    { id: index * 2, icon: item.icon, color: item.color, pairId: index },
+    { id: index * 2 + 1, icon: item.icon, color: item.color, pairId: index },
   ]);
   return shuffleArray(paired);
 };
 
-export default function Home(){
-  const [cards, setCards]=useState([]);
+export default function Home() {
+  // State 'cards' menyimpan array kartu yang sudah diacak
+  const [cards, setCards] = useState([]);
+  //State 'flippedCards
+  const [flippedCards, setFlippedCards] = useState([]);
 
-  //state flippedcards
-  const [flippedCards, setFlippedCards]=useState([]);
-  //state matchedCards
-  const [mtchedCards,setMatchedCards]=useState({});
-  //state moves
-  const[moves,setMoves]=useState(0);
-  //useEffect
-  useEffect(()=>{
+  //State 'matchedCards' menyimpan id kartu yang berhasil dicocokkan
+  const [matchedCards, setMatchedCards] = useState([]);
+
+  //State 'moves' menyimpan jumlah percobaan yang dilakukan pemain
+  const [moves, setMoves] = useState(0);
+
+  //useEffect untuk inisialisasi kartu saat komponen pertama kali dirender
+  useEffect(() => {
     setCards(createCards());
   }, []);
 
-//useEffect untuk mengecek kecocokan setiap kali kartu 2 terbuka
-useEffect(() => {
+  //useEffect untuk mengecek kecocokan setiap kali 2 kartu terbuka
+  useEffect(() => {
+    //Hanya cek jika sudah ada 2 kartu terbuka
+    if (flippedCards.length === 2) {
+      const [firstId, secondId] = flippedCards;
+      const firstCard = cards.find(c => c.id === firstId);
+      const secondCard = cards.find(c => c.id === secondId);
 
-  //Jika sudah ada 2 kartu terbuka
-  if (flippedCards.length === 2) {
+      //Tambah jumlah percobaan setiap kali 2 kartu dibuka
+      setMoves(prev => prev + 1);
 
-    const [firstId, secondId] = flippedCards;
-    //mencari data kartu berdasarkan id
-    const firstCard = cards.find(c => c.id === firstId);
-    const secondCard = cards.find(c => c.id === secondId);
-
-    //tambah jumlah percobaan setiap 2 kartu dibuka
-    setMoves(prev => prev + 1);
-    //jika kedua kartu memiliki pairId yang sama berarti cocok
-    if (firstCard.pairId === secondCard.pairId) {
-      //tambahkan kedua kartu ke matchedCards
-      setMatchedCards(prev => [...prev, firstId, secondId]);
-      //kosongkan flippedCards
-      setFlippedCards([]);
-    } else {
-
-      //jika tidak cocok, kartu akan ditutup kembali setelah 800ms
-      const timer = setTimeout(() => {
+      //Jika kedua kartu memiliki pairId yang sama, berarti cocok
+      if (firstCard.pairId === secondCard.pairId) {
+        //Tambahkan kedua kartu ke matchedCards
+        setMatchedCards(prev => [...prev, firstId, secondId]);
         setFlippedCards([]);
-      }, 800);
-
-      return () => clearTimeout(timer);
+      } else {
+        // Jika tidak cocok, tutup kembali setelah 800ms
+        const timer = setTimeout(() => {
+          setFlippedCards([]);
+        }, 800);
+        return () => clearTimeout(timer);
+      }
     }
-  }
+  }, [flippedCards, cards]);
 
-}, [flippedCards, cards]);
+  //Fungsi untuk membalik kartu ketika diklik
+  //Menerima parameter 'id' untuk mengidentifikasi kartu yang diklik
+  const handleCardFlip = (id) => {
+    //Hanya izinkan membalik jika kurang dari 2 kartu terbuka
+    //dan kartu yang diklik bukan kartu yang sudah terbuka
+    if (flippedCards.length < 2 && !flippedCards.includes(id)) {
+      setFlippedCards(prev => [...prev, id]);
+    }
+  };
 
+  //Fungsi untuk mereset permainan ke kondisi awal
+  const resetGame = () => {
+    setCards(createCards());
+    setFlippedCards([]);
+    setMatchedCards([]);
+    setMoves(0);
+  };
 
-//fungsi untuk membuka kartu ketika diklik
-const handleCardFlip = (id) => {
+  return (
+    // Container utama dengan background gradient dan tinggi minimal sesuai viewport
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 p-4">
+      {/* Judul aplikasi */}
+      <h1 className="text-4xl font-bold mb-6 text-white drop-shadow-lg flex items-center gap-3">
+        <GiCardJoker className="text-yellow-300 text-4xl" />
+        Memory Card
+      </h1>
 
-  // Mencegah membuka kartu jika sudah ada 2 kartu terbuka
-  // atau kartu yang diklik sudah terbuka
-  if (
-    flippedCards.length === 2 ||
-    flippedCards.includes(id)
-  ) return;
+      {/* Komponen ScoreBoard untuk menampilkan skor */}
+      <ScoreBoard
+        moves={moves}
+        matchedCount={matchedCards.length / 2}
+        totalPairs={ICONS.length}
+        onReset={resetGame}
+      />
 
-  // Tambahkan kartu ke flippedCards
-  setFlippedCards(prev => [...prev, id]);
-};
-// Fungsi untuk mereset permainan ke kondisi awal
-const resetGame = () => {
-  // membuat kartu baru yang sudah diacak
-  setCards(createCards());
-  // mengosongkan kartu terbuka
-  setFlippedCards([]);
-  // mengosongkan kartu yang sudah cocok
-  setMatchedCards([]);
-  // reset jumlah percobaan
-  setMoves(0);
-};
-
-
+      {/* Komponen GameBoard untuk menampilkan grid kartu */}
+      <div className="bg-white/10 backdrop-blur-sm p-6 rounded-2xl shadow-2xl">
+        <GameBoard
+          cards={cards}
+          flippedCards={flippedCards}
+          matchedCards={matchedCards}
+          onFlip={handleCardFlip}
+        />
+      </div>
+    </div>
+  );
 }
